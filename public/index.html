@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ICS Calendar Import</title>
+    <style>
+      body { font-family: sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+      section { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+      input, button { padding: 0.5rem; margin: 0.25rem 0; }
+      ul { padding-left: 1.2rem; }
+      .error { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <h1>Import iCal / ICS</h1>
+
+    <section>
+      <h2>Upload .ics file</h2>
+      <input id="icsFile" type="file" accept=".ics,text/calendar" />
+      <button id="uploadBtn">Import File</button>
+    </section>
+
+    <section>
+      <h2>Import from web URL</h2>
+      <input id="icsUrl" type="url" placeholder="https://example.com/calendar.ics" size="50" />
+      <button id="urlBtn">Import URL</button>
+    </section>
+
+    <section>
+      <h2>Imported events</h2>
+      <p id="message"></p>
+      <ul id="events"></ul>
+    </section>
+
+    <script>
+      const message = document.getElementById('message');
+      const eventsList = document.getElementById('events');
+
+      function renderEvents(events) {
+        eventsList.innerHTML = '';
+        for (const event of events) {
+          const li = document.createElement('li');
+          li.textContent = `${event.title} (${event.start}${event.end ? ` → ${event.end}` : ''})`;
+          eventsList.appendChild(li);
+        }
+      }
+
+      async function refreshEvents() {
+        const res = await fetch('/api/events');
+        const data = await res.json();
+        renderEvents(data.events || []);
+      }
+
+      async function handleResponse(res) {
+        const data = await res.json();
+        if (!res.ok) {
+          message.textContent = data.error || 'Import failed';
+          message.className = 'error';
+          return;
+        }
+        message.textContent = `Imported ${data.imported} event(s). Total stored: ${data.total}`;
+        message.className = '';
+        await refreshEvents();
+      }
+
+      document.getElementById('uploadBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('icsFile');
+        const file = fileInput.files[0];
+        if (!file) {
+          message.textContent = 'Choose an .ics file first.';
+          message.className = 'error';
+          return;
+        }
+
+        const text = await file.text();
+        const res = await fetch('/api/import/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/calendar' },
+          body: text,
+        });
+        await handleResponse(res);
+      });
+
+      document.getElementById('urlBtn').addEventListener('click', async () => {
+        const url = document.getElementById('icsUrl').value;
+        const res = await fetch('/api/import/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        await handleResponse(res);
+      });
+
+      refreshEvents();
+    </script>
+  </body>
+</html>
