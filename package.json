@@ -1,0 +1,21 @@
+{
+  "name": "gbggb",
+  "version": "1.0.0",
+  "description": "Minimal ICS/iCal import server",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blade361/gbggb.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blade361/gbggb/issues"
+  },
+  "homepage": "https://github.com/blade361/gbggb#readme"
+}
